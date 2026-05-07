@@ -1,0 +1,39 @@
+public class Persona {
+    private String nombre;
+    private int edad;
+
+    public Persona(String nombre, int edad) {
+        this.nombre = nombre;
+        this.edad = edad;
+    }
+
+    public void saludar() {
+        System.out.println("Hola, me llamo " + nombre + " y tengo " + edad + " anios.");
+    }
+
+    public int getEdad() {
+        return edad;
+    }
+
+    public static void main(String[] args) {
+        Persona p1 = new Persona("Roberto", 25);
+        Persona p2 = new Persona("Maria", 30);
+
+        p1.saludar();
+        p2.saludar();
+
+        int suma = 10 + 20;
+        double promedio = 15.5 / 2.0;
+        boolean esAdulto = (p1.getEdad() >= 18) && (p2.getEdad() != 0);
+
+        if (esAdulto) {
+            System.out.println("Son adultos");
+        } else {
+            System.out.println("No son adultos");
+        }
+
+        for (int i = 0; i < 5; i++) {
+            System.out.println(i);
+        }
+    }
+}

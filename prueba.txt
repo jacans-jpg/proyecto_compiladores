@@ -1,0 +1,6 @@
+public class ErrorSintaxis {
+    public static void main(String[] args) {
+        int x = 5 // Falta punto y coma
+        System.out.println(x)
+    }
+}

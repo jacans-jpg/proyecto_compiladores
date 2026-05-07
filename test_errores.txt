@@ -1,0 +1,28 @@
+public class Errores {
+    private int valor;
+
+    public void metodoConErrores() {
+        // Error semántico: variable no declarada
+        resultado = 10 + 5;
+
+        // Error semántico: tipos incompatibles
+        String texto = 100;
+
+        // Error semántico: condición no booleana
+        if (42) {
+            System.out.println("mal");
+        }
+
+        // Correcto
+        int x = 10;
+        int y = 20;
+        int z = x + y;
+
+        // Error semántico: operación inválida
+        boolean flag = true;
+        int bad = flag + 5;
+    }
+}
+
+// Error léxico: carácter inválido
+# invalido

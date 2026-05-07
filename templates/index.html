@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compilador — Analizador Léxico, Sintáctico y Semántico</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+<!-- ═══ TOP HEADER (solo visible en Inicio) ═══ -->
+<div class="top-header" id="top-header">
+    <div class="brand">
+        <div class="brand-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M9 18L3 12L9 6" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M15 6L21 12L15 18" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="brand-text">
+            <h1>Compilador <span class="brand-sub">- Analizador Léxico, Sintáctico y Semántico</span></h1>
+            <div class="brand-tag">Proyecto de Compiladores — UMG</div>
+        </div>
+    </div>
+
+    <div class="top-actions">
+        <div style="flex:1"></div>
+
+        <button class="action-btn" id="btn-theme" title="Cambiar tema">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <span>Tema</span>
+        </button>
+        <button class="action-btn" id="btn-about" title="Acerca de">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <span>Acerca de</span>
+        </button>
+    </div>
+</div>
+
+<!-- ═══ MAIN LAYOUT ═══ -->
+<div class="layout">
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar">
+        <nav class="sidebar-nav">
+            <a class="nav-item active" data-view="home">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12L12 3l9 9M5 10v11h14V10"/></svg>
+                <span>Inicio</span>
+            </a>
+            <a class="nav-item" data-view="editor">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                <span>Editor</span>
+            </a>
+            <a class="nav-item" data-view="tokens">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+                <span>Tokens</span>
+                <span class="nav-badge" id="nav-cnt-tokens">0</span>
+            </a>
+            <a class="nav-item" data-view="lex-simbolos">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="13" y2="15"/></svg>
+                <span>Tabla Léxica</span>
+                <span class="nav-badge" style="background:#27ae60" id="nav-cnt-lex-sym">0</span>
+            </a>
+            <a class="nav-item" data-view="lexico">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span>Análisis Léxico</span>
+                <span class="nav-badge danger" id="nav-cnt-lex">0</span>
+            </a>
+            <a class="nav-item" data-view="sintactico">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><line x1="8.5" y1="7.5" x2="11" y2="15.5"/><line x1="15.5" y1="7.5" x2="13" y2="15.5"/></svg>
+                <span>Análisis Sintáctico</span>
+                <span class="nav-badge danger" id="nav-cnt-syn">0</span>
+            </a>
+            <a class="nav-item" data-view="ast">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2"/><circle cx="6" cy="13" r="2"/><circle cx="18" cy="13" r="2"/><circle cx="9" cy="20" r="2"/><circle cx="15" cy="20" r="2"/><path d="M12 7v3M12 10l-5 2M12 10l5 2M6 15l2 4M18 15l-2 4"/></svg>
+                <span>Árbol (AST)</span>
+            </a>
+            <a class="nav-item" data-view="semantico">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <span>Análisis Semántico</span>
+                <span class="nav-badge danger" id="nav-cnt-sem">0</span>
+            </a>
+            <a class="nav-item" data-view="simbolos">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                <span>Tabla de Símbolos</span>
+                <span class="nav-badge" id="nav-cnt-sym">0</span>
+            </a>
+            <a class="nav-item" data-view="errores">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span>Errores</span>
+                <span class="nav-badge danger" id="nav-cnt-err">0</span>
+            </a>
+            <a class="nav-item" data-view="gramatica">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <span>Gramática EBNF</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer" id="sidebar-footer" style="display:none">
+            <div class="footer-label">Proyecto Actual</div>
+            <div class="footer-file">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                <span id="footer-filename">—</span>
+            </div>
+            <div class="footer-path">UMG · Compiladores 2026</div>
+        </div>
+    </aside>
+
+    <!-- ═══ MAIN CONTENT AREA ═══ -->
+    <main class="main">
+
+        <!-- ─── HOME / INICIO ─── -->
+        <section class="view active" id="view-home">
+
+            <div class="home-grid">
+                <div class="welcome-card">
+                    <div class="welcome-illustration">
+                        <svg viewBox="0 0 200 130" width="160" height="100">
+                            <rect x="20" y="20" width="140" height="100" rx="6" fill="rgba(123,108,237,0.18)" stroke="#7B6CED" stroke-width="2"/>
+                            <rect x="35" y="35" width="50" height="6" rx="3" fill="#7B6CED"/>
+                            <rect x="35" y="48" width="80" height="4" rx="2" fill="rgba(255,255,255,0.3)"/>
+                            <rect x="35" y="58" width="65" height="4" rx="2" fill="rgba(255,255,255,0.3)"/>
+                            <rect x="35" y="68" width="75" height="4" rx="2" fill="rgba(255,255,255,0.3)"/>
+                            <circle cx="135" cy="85" r="22" fill="rgba(123,108,237,0.4)" stroke="#7B6CED" stroke-width="2"/>
+                            <line x1="148" y1="98" x2="160" y2="110" stroke="#7B6CED" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="welcome-text">
+                        <h2>Bienvenido</h2>
+                        <p>Este es el entorno desarrollo para el proyecto de compiladores.<br>
+                        Navega entre las diferentes vistas para analizar el código paso a paso.</p>
+                        <div class="welcome-stats">
+                            <div class="stat-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                                <span>Líneas de código</span>
+                                <strong style="color:#7B6CED" id="stat-lines">0</strong>
+                            </div>
+                            <div class="stat-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/></svg>
+                                <span>Tokens</span>
+                                <strong style="color:#7B6CED" id="stat-tokens">0</strong>
+                            </div>
+                            <div class="stat-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                                <span>Errores</span>
+                                <strong style="color:#FFB13B" id="stat-errors">0</strong>
+                            </div>
+                            <div class="stat-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                                <span>Advertencias</span>
+                                <strong style="color:#FFB13B" id="stat-warns">0</strong>
+                            </div>
+                            <div class="stat-item">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg>
+                                <span>Identificadores</span>
+                                <strong style="color:#27ae60" id="stat-idents">0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-card">
+                    <h3>Flujo del Compilador</h3>
+                    <div class="flow-steps">
+                        <div class="flow-step">
+                            <div class="flow-icon" style="background:rgba(123,108,237,0.2);color:#7B6CED">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                            </div>
+                            <div class="flow-label">Léxico</div>
+                            <div class="flow-desc">Reconocimiento<br>de tokens</div>
+                        </div>
+                        <div class="flow-arrow">···►</div>
+                        <div class="flow-step">
+                            <div class="flow-icon" style="background:rgba(155,89,182,0.2);color:#9B59B6">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><line x1="8" y1="7" x2="11" y2="16"/><line x1="16" y1="7" x2="13" y2="16"/></svg>
+                            </div>
+                            <div class="flow-label">Sintáctico</div>
+                            <div class="flow-desc">Validación de reglas<br>gramaticales</div>
+                        </div>
+                        <div class="flow-arrow">···►</div>
+                        <div class="flow-step">
+                            <div class="flow-icon" style="background:rgba(46,204,113,0.2);color:#2ECC71">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                            </div>
+                            <div class="flow-label">Semántico</div>
+                            <div class="flow-desc">Validación de tipos<br>y ámbitos</div>
+                        </div>
+                        <div class="flow-arrow">···►</div>
+                        <div class="flow-step">
+                            <div class="flow-icon" style="background:rgba(255,177,59,0.2);color:#FFB13B">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            </div>
+                            <div class="flow-label">Reporte</div>
+                            <div class="flow-desc">Resultados<br>completos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjetas de secciones -->
+            <div class="section-cards">
+                <div class="section-card" data-go="tokens" style="--clr:#9B6CED">
+                    <h4>Tokens</h4>
+                    <div class="card-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="4" cy="18" r="1.5"/></svg>
+                    </div>
+                    <p>Visualiza la lista de tokens<br>generados por el analizador<br>léxico.</p>
+                    <button class="card-btn">Abrir ventana →</button>
+                </div>
+
+                <div class="section-card" data-go="lexico" style="--clr:#3498DB">
+                    <h4>Análisis Léxico</h4>
+                    <div class="card-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </div>
+                    <p>Revisa los detalles del análisis<br>léxico y los errores léxicos.</p>
+                    <button class="card-btn">Abrir ventana →</button>
+                </div>
+
+                <div class="section-card" data-go="sintactico" style="--clr:#2ECC71">
+                    <h4>Análisis Sintáctico</h4>
+                    <div class="card-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><line x1="8" y1="7.5" x2="11" y2="15.5"/><line x1="16" y1="7.5" x2="13" y2="15.5"/></svg>
+                    </div>
+                    <p>Consulta el análisis sintáctico,<br>errores y la estructura<br>gramatical.</p>
+                    <button class="card-btn">Abrir ventana →</button>
+                </div>
+
+                <div class="section-card" data-go="ast" style="--clr:#1ABC9C">
+                    <h4>Árbol (AST)</h4>
+                    <div class="card-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="2"/><circle cx="6" cy="13" r="2"/><circle cx="18" cy="13" r="2"/><circle cx="9" cy="20" r="2"/><circle cx="15" cy="20" r="2"/><path d="M12 7v3M12 10l-5 2M12 10l5 2M6 15l2 4M18 15l-2 4"/></svg>
+                    </div>
+                    <p>Explora la representación<br>del Árbol de Sintaxis<br>Abstracta.</p>
+                    <button class="card-btn">Abrir ventana →</button>
+                </div>
+
+                <div class="section-card" data-go="semantico" style="--clr:#FFB13B">
+                    <h4>Análisis Semántico</h4>
+                    <div class="card-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="9 11 12 14 22 4"/></svg>
+                    </div>
+                    <p>Validaciones semánticas,<br>chequeo de tipos, ámbitos<br>y más.</p>
+                    <button class="card-btn">Abrir ventana →</button>
+                </div>
+
+                <div class="section-card" data-go="simbolos" style="--clr:#E91E63">
+                    <h4>Tabla de Símbolos</h4>
+                    <div class="card-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                    </div>
+                    <p>Visualiza la tabla de símbolos,<br>ámbitos, tipos y atributos.</p>
+                    <button class="card-btn">Abrir ventana →</button>
+                </div>
+            </div>
+
+            <!-- Estado del proyecto REMOVIDO del inicio — ahora está en el Editor -->
+
+        </section>
+
+        <!-- ─── EDITOR ─── -->
+        <section class="view" id="view-editor">
+            <div class="view-header editor-view-header">
+                <div>
+                    <h2>Editor de Código</h2>
+                    <p>Escribe o carga código Java para analizar</p>
+                </div>
+                <div class="editor-actions-inline">
+                    <button class="btn-primary" id="ed-analyze">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Analizar todo
+                    </button>
+                    <button class="btn-secondary" id="ed-sample">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                        Código ejemplo
+                    </button>
+                    <input type="file" id="file-input" accept=".txt,.java" style="display:none">
+                    <button class="btn-secondary" id="ed-open">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                        Abrir archivo
+                    </button>
+                    <button class="btn-secondary" id="ed-clear">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                        Limpiar
+                    </button>
+                    <button class="btn-secondary" id="ed-txt">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        TXT
+                    </button>
+                    <button class="btn-secondary" id="ed-xl">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                        Excel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Layout: Editor izquierda, Estado derecha -->
+            <div class="editor-layout">
+
+                <!-- Columna izquierda: editor -->
+                <div class="editor-col">
+                    <div class="editor-card">
+                        <div class="editor-toolbar">
+                            <span class="dot" style="background:#2ECC71"></span>
+                            <span style="font-weight:600;font-size:13px">Código Fuente</span>
+                            <span style="margin-left:auto;font-size:11px;color:var(--muted)">Java &bull; Syntax Highlighting</span>
+                        </div>
+                        <textarea id="code-editor" spellcheck="false"></textarea>
+                    </div>
+                </div>
+
+                <!-- Columna derecha: Estado del Proyecto -->
+                <div class="estado-col">
+                    <div class="state-card">
+                        <h3>Estado del Proyecto</h3>
+                        <ul class="state-list">
+                            <li><span class="state-icon" id="state-lex">○</span><span>Análisis Léxico</span><span class="state-tag" id="state-lex-tag">Pendiente</span></li>
+                            <li><span class="state-icon" id="state-syn">○</span><span>Análisis Sintáctico</span><span class="state-tag" id="state-syn-tag">Pendiente</span></li>
+                            <li><span class="state-icon" id="state-sem">○</span><span>Análisis Semántico</span><span class="state-tag" id="state-sem-tag">Pendiente</span></li>
+                            <li><span class="state-icon" id="state-sym">○</span><span>Tabla de Símbolos</span><span class="state-tag" id="state-sym-tag">Pendiente</span></li>
+                        </ul>
+                    </div>
+                    <div class="progress-card" style="margin-top:14px">
+                        <svg viewBox="0 0 100 100" width="140" height="140">
+                            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
+                            <circle id="progress-circle" cx="50" cy="50" r="42" fill="none" stroke="#2ECC71" stroke-width="8" stroke-dasharray="263.89" stroke-dashoffset="263.89" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                            <text x="50" y="55" text-anchor="middle" fill="var(--text)" font-size="18" font-weight="700" id="progress-text">0%</text>
+                        </svg>
+                        <div class="progress-label" id="progress-label">Sin análisis</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ─── TOKENS ─── -->
+        <section class="view" id="view-tokens">
+            <div class="view-header">
+                <h2>Tokens</h2>
+                <p>Lista de tokens generados por el analizador léxico</p>
+            </div>
+            <div class="data-card">
+                <div class="data-header">
+                    <span class="badge" style="--c:#7B6CED">Total: <strong id="tk-total">0</strong></span>
+                    <input type="text" class="search-box" id="tk-search" placeholder="🔍 Filtrar tokens...">
+                </div>
+                <div class="grid-table tokens-grid">
+                    <div class="grid-header">
+                        <div class="cell">#</div>
+                        <div class="cell">Lexema</div>
+                        <div class="cell">Token (Tipo)</div>
+                        <div class="cell">Línea</div>
+                        <div class="cell">Columna</div>
+                    </div>
+                    <div class="grid-body" id="tokens-body">
+                        <div class="grid-empty">Analiza código primero</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── ANÁLISIS LÉXICO ─── -->
+        <!-- ─── TABLA LÉXICA DE SÍMBOLOS ─── -->
+        <section class="view" id="view-lex-simbolos">
+            <div class="view-header">
+                <h2>Tabla Léxica de Símbolos</h2>
+                <p>Identificadores únicos detectados por el scanner — línea de primera aparición, número de ocurrencias en el código</p>
+            </div>
+            <div class="info-grid">
+                <div class="info-stat" style="--c:#27ae60">
+                    <span class="info-label">Identificadores únicos</span>
+                    <span class="info-num" id="lex-sym-total">0</span>
+                </div>
+            </div>
+            <div class="data-card">
+                <div class="data-header">
+                    <span style="font-weight:600">Identificadores detectados por el scanner</span>
+                    <input type="text" class="search-box" id="lex-sym-search" placeholder="🔍 Filtrar...">
+                </div>
+                <div class="grid-table lex-symbols-grid">
+                    <div class="grid-header">
+                        <div class="cell">#</div>
+                        <div class="cell">Nombre</div>
+                        <div class="cell">Tipo Token</div>
+                        <div class="cell">Ocurrencias</div>
+                        <div class="cell">Líneas donde aparece</div>
+                    </div>
+                    <div class="grid-body" id="lex-symbols-body">
+                        <div class="grid-empty">Analiza código primero</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="view" id="view-lexico">
+            <div class="view-header">
+                <h2>Análisis Léxico</h2>
+                <p>Resultados del scanner — tokens reconocidos y errores léxicos</p>
+            </div>
+            <div class="info-grid">
+                <div class="info-stat" style="--c:#7B6CED">
+                    <span class="info-label">Tokens reconocidos</span>
+                    <span class="info-num" id="lex-tokens">0</span>
+                </div>
+                <div class="info-stat" style="--c:#E74C3C">
+                    <span class="info-label">Errores léxicos</span>
+                    <span class="info-num" id="lex-errs">0</span>
+                </div>
+            </div>
+            <div class="data-card">
+                <div class="data-header">
+                    <span style="font-weight:600">Errores Léxicos detectados</span>
+                </div>
+                <div class="grid-table lex-errors-grid">
+                    <div class="grid-header">
+                        <div class="cell">Código</div>
+                        <div class="cell">Lexema</div>
+                        <div class="cell">Línea</div>
+                        <div class="cell">Col</div>
+                        <div class="cell">Descripción</div>
+                    </div>
+                    <div class="grid-body" id="lex-errors-body">
+                        <div class="grid-empty">Sin errores</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── ANÁLISIS SINTÁCTICO ─── -->
+        <section class="view" id="view-sintactico">
+            <div class="view-header">
+                <h2>Análisis Sintáctico</h2>
+                <p>Resultados del parser — validación gramatical y errores sintácticos</p>
+            </div>
+            <div class="info-grid">
+                <div class="info-stat" style="--c:#9B59B6">
+                    <span class="info-label">Reglas aplicadas</span>
+                    <span class="info-num" id="syn-rules">0</span>
+                </div>
+                <div class="info-stat" style="--c:#E67E22">
+                    <span class="info-label">Errores sintácticos</span>
+                    <span class="info-num" id="syn-errs">0</span>
+                </div>
+            </div>
+            <div class="data-card">
+                <div class="data-header">
+                    <span style="font-weight:600">Errores Sintácticos detectados</span>
+                </div>
+                <div class="grid-table errors-grid">
+                    <div class="grid-header">
+                        <div class="cell">Código</div>
+                        <div class="cell">Línea</div>
+                        <div class="cell">Col</div>
+                        <div class="cell">Descripción</div>
+                    </div>
+                    <div class="grid-body" id="syn-errors-body">
+                        <div class="grid-empty">Sin errores</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── ÁRBOL AST ─── -->
+        <section class="view" id="view-ast">
+            <div class="view-header">
+                <h2>Árbol de Sintaxis Abstracta (AST)</h2>
+                <p>Representación jerárquica del programa parseado</p>
+            </div>
+            <div class="ast-card">
+                <div class="ast-tabs">
+                    <button class="ast-tab active" data-ast="graph">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><line x1="12" y1="12" x2="6" y2="14"/><line x1="12" y1="12" x2="18" y2="14"/></svg>
+                        Árbol Gráfico
+                    </button>
+                    <button class="ast-tab" data-ast="text">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="10" x2="14" y2="10"/><line x1="4" y1="14" x2="18" y2="14"/><line x1="4" y1="18" x2="12" y2="18"/></svg>
+                        Árbol Texto
+                    </button>
+                    <div class="ast-legend" id="ast-legend"></div>
+                </div>
+
+                <div class="ast-panel active" id="ast-panel-graph">
+                    <div id="ast-svg-container"><div class="empty light">Analiza código primero</div></div>
+                </div>
+
+                <div class="ast-panel" id="ast-panel-text">
+                    <div class="ast-text-header">
+                        <span style="display:flex;align-items:center;gap:6px">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Haz clic en una línea para resaltarla
+                        </span>
+                        <span style="margin-left:auto" id="ast-text-info">—</span>
+                    </div>
+                    <div class="ast-text-body">
+                        <div class="ast-line-nums" id="ast-line-nums"></div>
+                        <div class="ast-text-code" id="ast-text-code"><span class="empty light">Analiza código primero</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── ANÁLISIS SEMÁNTICO ─── -->
+        <section class="view" id="view-semantico">
+            <div class="view-header">
+                <h2>Análisis Semántico</h2>
+                <p>Chequeo de tipos, ámbitos y declaraciones previas</p>
+            </div>
+            <div class="info-grid">
+                <div class="info-stat" style="--c:#1ABC9C">
+                    <span class="info-label">Símbolos validados</span>
+                    <span class="info-num" id="sem-syms">0</span>
+                </div>
+                <div class="info-stat" style="--c:#D35400">
+                    <span class="info-label">Errores semánticos</span>
+                    <span class="info-num" id="sem-errs">0</span>
+                </div>
+            </div>
+            <div class="data-card">
+                <div class="data-header">
+                    <span style="font-weight:600">Errores Semánticos detectados</span>
+                </div>
+                <div class="grid-table errors-grid">
+                    <div class="grid-header">
+                        <div class="cell">Código</div>
+                        <div class="cell">Línea</div>
+                        <div class="cell">Col</div>
+                        <div class="cell">Descripción</div>
+                    </div>
+                    <div class="grid-body" id="sem-errors-body">
+                        <div class="grid-empty">Sin errores</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── TABLA DE SÍMBOLOS ─── -->
+        <section class="view" id="view-simbolos">
+            <div class="view-header">
+                <h2>Tabla de Símbolos</h2>
+                <p>Identificadores, tipos, ámbitos y posiciones</p>
+            </div>
+            <div class="data-card">
+                <div class="data-header">
+                    <span class="badge" style="--c:#E91E63">Total: <strong id="sym-total">0</strong></span>
+                    <input type="text" class="search-box" id="sym-search" placeholder="🔍 Filtrar...">
+                </div>
+                <div class="grid-table symbols-grid">
+                    <div class="grid-header">
+                        <div class="cell">#</div>
+                        <div class="cell">Nombre</div>
+                        <div class="cell">Categoría</div>
+                        <div class="cell">Tipo</div>
+                        <div class="cell">Ámbito</div>
+                        <div class="cell">Línea</div>
+                        <div class="cell">Col</div>
+                    </div>
+                    <div class="grid-body" id="symbols-body">
+                        <div class="grid-empty">Analiza código primero</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── ERRORES (resumen) ─── -->
+        <section class="view" id="view-errores">
+            <div class="view-header">
+                <h2>Errores</h2>
+                <p>Resumen consolidado de todos los errores detectados</p>
+            </div>
+            <div class="info-grid three">
+                <div class="info-stat" style="--c:#E74C3C">
+                    <span class="info-label">Léxicos</span>
+                    <span class="info-num" id="all-lex">0</span>
+                </div>
+                <div class="info-stat" style="--c:#E67E22">
+                    <span class="info-label">Sintácticos</span>
+                    <span class="info-num" id="all-syn">0</span>
+                </div>
+                <div class="info-stat" style="--c:#D35400">
+                    <span class="info-label">Semánticos</span>
+                    <span class="info-num" id="all-sem">0</span>
+                </div>
+            </div>
+            <div class="data-card">
+                <div class="data-header"><span style="font-weight:600">Lista completa de errores</span></div>
+                <div class="grid-table all-errors-grid">
+                    <div class="grid-header">
+                        <div class="cell">Tipo</div>
+                        <div class="cell">Código</div>
+                        <div class="cell">Lexema</div>
+                        <div class="cell">Línea</div>
+                        <div class="cell">Col</div>
+                        <div class="cell">Descripción</div>
+                    </div>
+                    <div class="grid-body" id="all-errors-body">
+                        <div class="grid-empty">Sin errores</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── GRAMÁTICA EBNF ─── -->
+        <section class="view" id="view-gramatica">
+            <div class="view-header">
+                <h2>Gramática Formal (EBNF)</h2>
+                <p>Reglas de producción del lenguaje soportado</p>
+            </div>
+            <div class="grammar-card">
+                <pre class="grammar-text" id="grammar-text">Cargando...</pre>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+    <span id="status">Listo</span>
+    <div style="margin-left:auto;display:flex;gap:18px;align-items:center">
+        <span id="bar-file-wrap" style="display:none">Proyecto: <strong id="bar-file">—</strong></span>
+        <span>Lenguaje: <strong>Java</strong></span>
+        <span id="bar-time"></span>
+    </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
