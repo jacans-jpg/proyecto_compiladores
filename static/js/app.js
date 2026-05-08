@@ -623,15 +623,21 @@ function renderAstTree(treeData) {
         .on('zoom', e => g.attr('transform', e.transform));
     svg.call(zoomBeh);
 
-    // Centrar árbol inicialmente en el contenedor
-    const offsetX = (cW / 2) - ((x0 + x1) / 2);
+    // Auto-fit: escalar para que todo el árbol quepa en el contenedor
+    const treeW = (x1 - x0) + dynW * 2;
+    const treeH = y1 + (nodeH + 44) * 2;
+    const scaleX = (cW - margin.left - margin.right) / treeW;
+    const scaleY = (cH - margin.top - margin.bottom) / treeH;
+    const fitScale = Math.min(scaleX, scaleY, 1);
+
+    const offsetX = cW / 2 - ((x0 + x1) / 2) * fitScale;
     const offsetY = margin.top;
+    const fitTransform = d3.zoomIdentity.translate(offsetX, offsetY).scale(fitScale);
 
-    const g = svg.append('g')
-        .attr('transform', `translate(${offsetX},${offsetY})`);
+    const g = svg.append('g');
 
-    // Aplicar transform inicial al zoom para que sea consistente con pan posterior
-    svg.call(zoomBeh.transform, d3.zoomIdentity.translate(offsetX, offsetY));
+    _fitTransform = fitTransform;
+    svg.call(zoomBeh.transform, fitTransform);
 
     g.selectAll('.ast-link')
         .data(root.links()).join('path').attr('class','ast-link')
@@ -670,9 +676,10 @@ function renderAstTree(treeData) {
     node.append('text').text(d => d.data.name);
 }
 
-function zoomIn()  { if (zoomBeh) d3.select('#ast-svg-container svg').call(zoomBeh.scaleBy, 1.3); }
-function zoomOut() { if (zoomBeh) d3.select('#ast-svg-container svg').call(zoomBeh.scaleBy, 0.7); }
-function resetZoom() { if (zoomBeh) d3.select('#ast-svg-container svg').call(zoomBeh.transform, d3.zoomIdentity); }
+let _fitTransform = null;
+function zoomIn()    { if (zoomBeh) d3.select('#ast-svg-container svg').call(zoomBeh.scaleBy, 1.3); }
+function zoomOut()   { if (zoomBeh) d3.select('#ast-svg-container svg').call(zoomBeh.scaleBy, 0.7); }
+function resetZoom() { if (zoomBeh && _fitTransform) d3.select('#ast-svg-container svg').call(zoomBeh.transform, _fitTransform); }
 
 window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
