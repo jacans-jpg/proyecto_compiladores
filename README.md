@@ -1,6 +1,6 @@
 # Compilador Java
 
-Compilador de subconjunto del lenguaje Java desarrollado en Python con interfaz web, como proyecto de la asignatura de **Compiladores** — Universidad Mariano Gálvez de Guatemala.
+Compilador de subconjunto del lenguaje Java desarrollado en Python con interfaz web, como proyecto de la asignatura de **Compiladores** de Universidad Mariano Gálvez de Guatemala.
 
 ## Descripción
 
@@ -60,4 +60,4 @@ Abrir en el navegador: `http://localhost:5000`
 | Jose Ivan Garcia Castellan | 0910-23-14036 |
 | Nicomedes Eduardo Hernández Marroquín | 0910-20-3104 |
 
-Universidad Mariano Gálvez de Guatemala — 2026
+Universidad Mariano Gálvez de Guatemala 2026
