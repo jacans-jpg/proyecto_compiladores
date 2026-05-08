@@ -325,10 +325,9 @@ def export_excel():
     add("Tokens", ["#","Lexema","Token","Línea","Columna"],
         [(t["n"],t["lexema"],t["tipo"],t["linea"],t["columna"]) for t in r["tokens"]],
         "2980b9", (1,4,5))
-    add("Tabla Léxica", ["#","Nombre","Tipo Token","Ocurrencias","Líneas","Valor"],
+    add("Tabla Léxica", ["#","Nombre","Tipo Token","Ocurrencias","Líneas"],
         [(s["n"],s["nombre"],s["tipo"],s.get("ocurrencias",1),
-          ", ".join(f"Ln {l}" for l in s.get("lineas",[s["linea"]])),
-          s["valor"] or "N/A") for s in r.get("lex_symbols",[])],
+          ", ".join(f"Ln {l}" for l in s.get("lineas",[s["linea"]]))) for s in r.get("lex_symbols",[])],
         "27ae60", (1,4))
     add("Tabla de Símbolos", ["#","Nombre","Categoría","Tipo","Ámbito","Línea","Col"],
         [(s["n"],s["nombre"],s["categoria"],s["tipo"],s["ambito"],s["linea"],s["columna"]) for s in r["symbols"]],
