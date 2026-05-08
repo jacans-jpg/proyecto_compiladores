@@ -416,7 +416,12 @@ def export_excel():
                 bg = hex_rgb(COLORS_MAP.get(t["type"], DEFAULT_C))
                 hw = max(NODE_R, len(label)*7.5/2+10)
                 draw.ellipse([x-hw,y-NODE_R,x+hw,y+NODE_R], fill=bg, outline=(44,62,80), width=2)
-                draw.text((x,y), label, fill=(255,255,255), anchor="mm")
+                try:
+                    bbox = draw.textbbox((0,0), label)
+                    tw, th = bbox[2]-bbox[0], bbox[3]-bbox[1]
+                except AttributeError:
+                    tw, th = draw.textsize(label)
+                draw.text((x - tw//2, y - th//2), label, fill=(255,255,255))
                 for ch in t["children"]: draw_nodes(ch)
 
             draw_edges(td); draw_nodes(td)
