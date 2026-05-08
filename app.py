@@ -4,7 +4,7 @@ API REST + páginas de resultados
 """
 
 from flask import Flask, render_template, request, jsonify, send_file, session
-import json, os, tempfile, io
+import json, os , tempfile, io
 
 from src.services.lexer_service import LexerService
 from src.services.parser_service import Parser
@@ -278,6 +278,162 @@ def export_txt():
     buf = io.BytesIO("\n".join(lines).encode("utf-8"))
     buf.seek(0)
     return send_file(buf, mimetype="text/plain", as_attachment=True, download_name="reporte_compilador.txt")
+
+
+# ================================================================
+#  API — EXPORTAR GRAMÁTICA EBNF como archivo .txt
+# ================================================================
+@app.route("/api/export/grammar")
+def export_grammar():
+    grammar = """(* ═══════════════════════════════════════════════════════════ *)
+(*  GRAMÁTICA FORMAL — Compilador Java (subconjunto)            *)
+(*  Notación: EBNF (Extended Backus-Naur Form)                  *)
+(*  Universidad Mariano Gálvez de Guatemala — Compiladores 2026 *)
+(* ═══════════════════════════════════════════════════════════ *)
+
+(* PROGRAMA *)
+programa            = { declaracion_clase } ;
+
+(* CLASE *)
+declaracion_clase   = { modificador } , "class" , IDENTIFICADOR ,
+                      [ "extends" , IDENTIFICADOR ] ,
+                      [ "implements" , IDENTIFICADOR , { "," , IDENTIFICADOR } ] ,
+                      "{" , { miembro_clase } , "}" ;
+
+modificador         = "public" | "private" | "protected"
+                    | "static" | "final" | "abstract" ;
+
+miembro_clase       = declaracion_campo
+                    | declaracion_metodo
+                    | declaracion_constructor ;
+
+(* CAMPOS Y MÉTODOS *)
+declaracion_campo   = { modificador } , tipo , IDENTIFICADOR ,
+                      [ "=" , expresion ] , ";" ;
+
+declaracion_metodo  = { modificador } , ( tipo | "void" ) , IDENTIFICADOR ,
+                      "(" , [ parametros ] , ")" , bloque ;
+
+declaracion_constructor = { modificador } , IDENTIFICADOR ,
+                          "(" , [ parametros ] , ")" , bloque ;
+
+parametros          = parametro , { "," , parametro } ;
+parametro           = tipo , IDENTIFICADOR ;
+
+(* TIPOS *)
+tipo                = tipo_primitivo | IDENTIFICADOR | tipo , "[]" ;
+tipo_primitivo      = "int" | "float" | "double" | "boolean"
+                    | "char" | "String" | "long" | "short" | "byte" ;
+
+(* SENTENCIAS *)
+bloque              = "{" , { sentencia } , "}" ;
+
+sentencia           = declaracion_variable
+                    | sentencia_if
+                    | sentencia_while
+                    | sentencia_for
+                    | sentencia_do_while
+                    | sentencia_return
+                    | sentencia_switch
+                    | sentencia_try
+                    | sentencia_break
+                    | sentencia_continue
+                    | sentencia_throw
+                    | sentencia_expresion
+                    | bloque ;
+
+declaracion_variable = tipo , IDENTIFICADOR , [ "=" , expresion ] , ";" ;
+
+sentencia_if        = "if" , "(" , expresion , ")" , ( bloque | sentencia ) ,
+                      [ "else" , ( bloque | sentencia | sentencia_if ) ] ;
+
+sentencia_while     = "while" , "(" , expresion , ")" , ( bloque | sentencia ) ;
+
+sentencia_for       = "for" , "(" ,
+                      ( declaracion_variable | sentencia_expresion ) ,
+                      expresion , ";" , expresion , ")" ,
+                      ( bloque | sentencia ) ;
+
+sentencia_do_while  = "do" , bloque , "while" , "(" , expresion , ")" , ";" ;
+
+sentencia_return    = "return" , [ expresion ] , ";" ;
+
+sentencia_switch    = "switch" , "(" , expresion , ")" , "{" ,
+                      { ( "case" , expresion , ":" | "default" , ":" ) ,
+                        { sentencia } } , "}" ;
+
+sentencia_try       = "try" , bloque ,
+                      { "catch" , "(" , tipo , IDENTIFICADOR , ")" , bloque } ,
+                      [ "finally" , bloque ] ;
+
+sentencia_break     = "break" , ";" ;
+sentencia_continue  = "continue" , ";" ;
+sentencia_throw     = "throw" , expresion , ";" ;
+
+sentencia_expresion = expresion ,
+                      [ ( "=" | "+=" | "-=" | "*=" | "/=" | "%=" ) , expresion ] , ";" ;
+
+(* EXPRESIONES — precedencia de menor a mayor *)
+expresion           = ternario ;
+
+ternario            = or_logico , [ "?" , or_logico , ":" , or_logico ] ;
+
+or_logico           = and_logico , { "||" , and_logico } ;
+
+and_logico          = igualdad , { "&&" , igualdad } ;
+
+igualdad            = relacional , { ( "==" | "!=" ) , relacional } ;
+
+relacional          = aditiva , { ( "<" | ">" | "<=" | ">=" ) , aditiva } ;
+
+aditiva             = multiplicativa , { ( "+" | "-" ) , multiplicativa } ;
+
+multiplicativa      = unaria , { ( "*" | "/" | "%" ) , unaria } ;
+
+unaria              = ( "!" | "-" | "++" | "--" ) , unaria | postfija ;
+
+postfija            = primaria , [ "++" | "--" ] ;
+
+primaria            = literal
+                    | IDENTIFICADOR
+                    | "this"
+                    | "new" , IDENTIFICADOR , "(" , [ argumentos ] , ")"
+                    | "(" , expresion , ")"
+                    | acceso_o_llamada ;
+
+acceso_o_llamada    = primaria , { "." , IDENTIFICADOR ,
+                      [ "(" , [ argumentos ] , ")" ] } ;
+
+argumentos          = expresion , { "," , expresion } ;
+
+(* LITERALES *)
+literal             = INTEGER | FLOAT | STRING | CHAR
+                    | "true" | "false" | "null" ;
+
+(* TOKENS TERMINALES *)
+IDENTIFICADOR       = letra , { letra | digito | "_" | "$" } ;
+INTEGER             = digito , { digito } ;
+FLOAT               = digito , { digito } , "." , digito , { digito } ;
+STRING              = '"' , { caracter } , '"' ;
+CHAR                = "'" , caracter , "'" ;
+
+letra               = "A".."Z" | "a".."z" | "_" | "$" ;
+digito              = "0".."9" ;
+
+(* CONVENCIONES EBNF:
+   =     definición de regla
+   ,     concatenación
+   |     alternativa (or)
+   { }   cero o más repeticiones
+   [ ]   elemento opcional
+   " "   token literal terminal
+   (* *) comentario
+*)"""
+    from io import BytesIO
+    buf = BytesIO(grammar.encode('utf-8'))
+    buf.seek(0)
+    return send_file(buf, mimetype="text/plain", as_attachment=True,
+                     download_name="gramatica_java_ebnf.txt")
 
 
 # ================================================================

@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compilador — Analizador Léxico, Sintáctico y Semántico</title>
+    <title>Analizador Léxico, Sintáctico y Semántico</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%237B6CED'/><text y='.9em' x='50%' text-anchor='middle' font-size='62' font-family='monospace' fill='white'>⟨/⟩</text></svg>">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
@@ -25,8 +26,8 @@
             </svg>
         </div>
         <div class="brand-text">
-            <h1>Compilador <span class="brand-sub">- Analizador Léxico, Sintáctico y Semántico</span></h1>
-            <div class="brand-tag">Proyecto de Compiladores — UMG</div>
+            <h1>Compilador <span class="brand-sub"> Analizador Léxico, Sintáctico y Semántico</span></h1>
+            <div class="brand-tag">Proyecto de Compiladores UMG</div>
         </div>
     </div>
 
@@ -371,7 +372,7 @@
         <section class="view" id="view-lex-simbolos">
             <div class="view-header">
                 <h2>Tabla Léxica de Símbolos</h2>
-                <p>Identificadores únicos detectados por el scanner — línea de primera aparición, número de ocurrencias en el código</p>
+                <p>Identificadores únicos detectados por el scanner con línea de primera aparición, número de ocurrencias en el código</p>
             </div>
             <div class="info-grid">
                 <div class="info-stat" style="--c:#27ae60">
@@ -402,7 +403,7 @@
         <section class="view" id="view-lexico">
             <div class="view-header">
                 <h2>Análisis Léxico</h2>
-                <p>Resultados del scanner — tokens reconocidos y errores léxicos</p>
+                <p>Resultados del scanner con tokens reconocidos y errores léxicos</p>
             </div>
             <div class="info-grid">
                 <div class="info-stat" style="--c:#7B6CED">
@@ -608,9 +609,14 @@
 
         <!-- ─── GRAMÁTICA EBNF ─── -->
         <section class="view" id="view-gramatica">
-            <div class="view-header">
-                <h2>Gramática Formal (EBNF)</h2>
-                <p>Reglas de producción del lenguaje soportado</p>
+            <div class="view-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                <div>
+                    <h2>Gramática Formal (EBNF)</h2>
+                    <p>Reglas de producción del lenguaje soportado</p>
+                </div>
+                <a href="/api/export/grammar" class="btn-secondary" style="text-decoration:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px">
+                    ⬇ Descargar .txt
+                </a>
             </div>
             <div class="grammar-card">
                 <pre class="grammar-text" id="grammar-text">Cargando...</pre>
